@@ -3,7 +3,7 @@ Here are some scripts to automate installation of some popular HPC applications.
 
 ## [OPM](./build-opm.sh)
 Install the Open Porous Media reservoir simulator [OPM](https://opm-project.org/) for upstream oil & gas E&P.
-This builds upon the [CentOS-HPC VM image](https://techcommunity.microsoft.com/t5/Azure-Compute/CentOS-HPC-VM-Image-for-SR-IOV-enabled-Azure-HPC-VMs/ba-p/665557) for the SR-IOV enabled [H-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-hpc) in Azure. Benchmarks results from running on the [HB-series](https://docs.microsoft.com/en-us/azure/virtual-machines/workloads/hpc/hb-series-overview) coming soon.
+This builds upon the [CentOS-HPC VM image](https://techcommunity.microsoft.com/t5/Azure-Compute/CentOS-HPC-VM-Image-for-SR-IOV-enabled-Azure-HPC-VMs/ba-p/665557) for the SR-IOV enabled [H-series](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-hpc) in Azure. Benchmarks results from running on the [HB-series](https://docs.microsoft.com/en-us/azure/virtual-machines/workloads/hpc/hb-series-overview) are available in a [blog post](https://techcommunity.microsoft.com/t5/Azure-Compute/Reservoir-Simulation-on-Azure-HPC-for-Oil-amp-Gas/ba-p/791986).
 
 Build and run with
 ```
@@ -17,8 +17,9 @@ where the parameter file `param` can be constructed as follows. More details on 
 ecl-deck-file-name=NORNE_ATW2013.DATA
 output-dir=out_parallel
 output-mode=none
-output-interval=10000
-threads-per-process=4
+output-interval=1000000
+enable-opm-rst-file=false
+threads-per-process=1
 ```
 
 ## [GROMACS](./build-gromacs.sh)

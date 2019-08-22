@@ -1,15 +1,18 @@
 #!/bin/bash
 
 NPROCS=40
-mkdir -p opm
-pushd opm
+OPM_DIR=opm
+mkdir -p $OPM_DIR
+pushd $OPM_DIR
 CWD=$(pwd)
 
 
 packages()
 {
   sudo yum install -y epel-release
+  sudo yum install -y gmp gmp-devel
   sudo yum install -y lapack lapack-devel
+  sudo yum install -y suitesparse suitesparse-devel
 
   # Default path
   LD_LIBRARY_PATH=${LD_LIBRARY_PATH-}:/usr/lib64:/usr/local/lib
@@ -48,6 +51,22 @@ install_parmetis()
   # Getting metis.h and libmetis.a
   cp $CWD/$PARMETIS_ROOT/metis/include/metis.h $CWD/$PARMETIS_ROOT/include/.
   cp $CWD/$PARMETIS_ROOT/build/Linux-x86_64/libmetis/libmetis.a $CWD/$PARMETIS_ROOT/lib/.
+  popd
+}
+
+
+SUPERLU_ROOT=superlu_dist-6.1.1
+install_superlu()
+{
+  wget -nv https://github.com/xiaoyeli/superlu_dist/archive/v6.1.1.tar.gz
+  tar xzf v6.1.1.tar.gz
+  pushd $CWD/$SUPERLU_ROOT
+  mkdir -p build
+  pushd build
+  cmake .. -DTPL_PARMETIS_INCLUDE_DIRS=$CWD/$PARMETIS_ROOT/include -DTPL_PARMETIS_LIBRARIES="$CWD/$PARMETIS_ROOT/lib/libparmetis.a;$CWD/$PARMETIS_ROOT/lib/libmetis.a"
+  make -j $NPROCS
+  sudo make install
+  popd
   popd
 }
 
@@ -113,7 +132,7 @@ USE_CMAKE=yes \\
 CONFIGURE_FLAGS=\"CXXFLAGS=\\\"$FLAGS\\\" \\
   --cache-file=../cache.config \\
   --disable-documentation \\
-  --disable-shared \\
+  --enable-shared \\
   --enable-parallel \\
   --disable-expressiontemplates \\
   --enable-experimental-grid-extensions \\
@@ -156,7 +175,7 @@ install_ecl()
   pushd libecl
   mkdir -p build
   pushd build
-  cmake .. -DCMAKE_INSTALL_PREFIX=$CWD/ecl
+  cmake .. -DERT_USE_OPENMP=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$CWD/ecl
   make -j $NPROCS
   make install
   popd
@@ -173,7 +192,7 @@ install_opm()
     git clone https://github.com/OPM/$repo.git
     mkdir -p $repo/build
     cd $repo/build
-    cmake -DUSE_MPI=1 -DUSE_OPENMP_DEFAULT=1 -DBLAS_LIBRARIES=/usr/lib64 -DBoost_INCLUDE_DIR=$CWD/boost_1_70_0 -DZOLTAN_INCLUDE_DIRS=$CWD/$ZOLTAN_ROOT/build/include -DZOLTAN_LIBRARIES=$CWD/$ZOLTAN_ROOT/build/lib/libzoltan.a -DMETIS_INCLUDE_DIRS=$CWD/$PARMETIS_ROOT/include -DMETIS_LIBRARIES=$CWD/$PARMETIS_ROOT/lib/libparmetis.a -DPARMETIS_INCLUDE_DIR=$CWD/$PARMETIS_ROOT/include -DCMAKE_PREFIX_PATH=$CWD/dune -DCMAKE_CXX_STANDARD_LIBRARIES="$CWD/$PARMETIS_ROOT/lib/libparmetis.a $CWD/$PARMETIS_ROOT/lib/libmetis.a" -DCMAKE_INSTALL_PREFIX=$CWD ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=ON -DUSE_OPENMP=ON -DBLAS_LIBRARIES=/usr/lib64 -DBoost_INCLUDE_DIR=$CWD/boost_1_70_0 -DZOLTAN_INCLUDE_DIRS=$CWD/$ZOLTAN_ROOT/build/include -DZOLTAN_LIBRARIES=$CWD/$ZOLTAN_ROOT/build/lib/libzoltan.a -DMETIS_INCLUDE_DIRS=$CWD/$PARMETIS_ROOT/include -DMETIS_LIBRARIES=$CWD/$PARMETIS_ROOT/lib/libparmetis.a -DPARMETIS_INCLUDE_DIR=$CWD/$PARMETIS_ROOT/include -DCMAKE_PREFIX_PATH=$CWD/dune -DCMAKE_CXX_STANDARD_LIBRARIES="$CWD/$PARMETIS_ROOT/lib/libparmetis.a $CWD/$PARMETIS_ROOT/lib/libmetis.a" -DCMAKE_INSTALL_PREFIX=$CWD ..
     make -j $NPROCS
     cd ../..
   done
@@ -184,6 +203,7 @@ packages
 load_modules
 install_cmake
 install_parmetis
+install_superlu
 install_zoltan
 install_boost
 install_dune
